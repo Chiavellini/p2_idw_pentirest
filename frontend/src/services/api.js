@@ -1,4 +1,24 @@
-const API_BASE = 'http://127.0.0.1:8000';
+// Detectar automáticamente si estamos en desarrollo o producción
+// En desarrollo (localhost): usa el backend local
+// En producción (GitHub Pages): necesita backend desplegado públicamente
+const getApiBase = () => {
+  // Si estamos en localhost (desarrollo), usar backend local
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://127.0.0.1:8000';
+  }
+  
+  // Si estamos en producción (GitHub Pages u otro hosting)
+  // Necesitas desplegar el backend y cambiar esta URL
+  // Por ahora, intentará usar el mismo origen (no funcionará si backend no está ahí)
+  console.warn('⚠️ Frontend en producción detectado. El backend debe estar desplegado públicamente.');
+  console.warn('⚠️ Cambia esta URL por la de tu backend desplegado (Railway, Render, etc.)');
+  
+  // TODO: Cambiar por la URL de tu backend desplegado
+  // Ejemplo: return 'https://tu-backend.railway.app';
+  return window.location.origin; // Esto no funcionará si el backend no está en el mismo dominio
+};
+
+const API_BASE = getApiBase();
 
 // ============================================================================
 // POSTS API
