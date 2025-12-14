@@ -1,0 +1,32 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1;
+  padding-top: 76px;
+}
+
+/* Loading Screen */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  gap: 24px;
+}
+
+.loading-screen .loading-spinner {
+  width: 60px;
+  height: 60px;
+  border-width: 5px;
+}
+
+.loading-screen p {
+  font-size: 18px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
