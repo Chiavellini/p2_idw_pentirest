@@ -1,26 +1,10 @@
 // Configuración de API Base URL
-// - En desarrollo (localhost): usa backend local
-// - En producción (GitHub Pages): usa localhost (solo funciona si tienes túnel o solo para ti)
-const getApiBase = () => {
-  // Si estamos en localhost (desarrollo), usar backend local
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://127.0.0.1:8000';
-  }
-  
-  // Si estamos en GitHub Pages o producción, usar localhost
-  // ⚠️ IMPORTANTE: Esto solo funcionará si:
-  // 1. Tienes un túnel (ngrok, localtunnel) exponiendo tu localhost:8000
-  // 2. O solo para ti mismo cuando visitas desde tu máquina con el backend corriendo
-  // Para otros usuarios, necesitarás un túnel público o desplegar el backend
-  
-  // Si tienes un túnel, cambia esta URL por la del túnel:
-  // Ejemplo con ngrok: return 'https://abc123.ngrok.io';
-  // Ejemplo con localtunnel: return 'https://tu-tunnel.loca.lt';
-  
-  return 'http://127.0.0.1:8000';
-};
+// Siempre usa localhost para el backend (tanto en desarrollo como en GitHub Pages)
+const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
 
-const API_BASE = getApiBase();
+const API_BASE = isLocal
+  ? 'http://127.0.0.1:8000'      // cuando estoy probando en mi compu
+  : 'http://127.0.0.1:8000';     // cuando está desplegado en GitHub Pages
 
 // ============================================================================
 // POSTS API
