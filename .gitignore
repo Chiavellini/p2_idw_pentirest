@@ -89,6 +89,8 @@ node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/build/
+frontend/.vite/
+.vite/
 package-lock.json
 frontend/package-lock.json
 npm-debug.log*
