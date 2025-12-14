@@ -1,5 +1,12 @@
+# Web Framework
 fastapi==0.104.1
-uvicorn==0.24.0
-requests==2.31.0
-python-dotenv==1.0.0
 pydantic==2.5.0
+
+# ASGI Server
+uvicorn[standard]==0.24.0
+
+# HTTP Client
+requests==2.31.0
+
+# Environment Variables
+python-dotenv==1.0.0

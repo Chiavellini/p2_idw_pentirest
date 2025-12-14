@@ -7,28 +7,23 @@ import sqlite3
 import os
 from dotenv import load_dotenv
 import requests
+import json
 
 # Cargar variables de entorno desde .env
 load_dotenv()
 
-# Instancia de FastAPI
-app = FastAPI(
-    title="Pinterest Clone API",
-    description="API para clon de Pinterest con posts e integración Unsplash",
-    version="1.0.0"
-)
+app = FastAPI(title="Pinfinity API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite cualquier origen. Cambiar en producción.
+    allow_origins=["*"],  # Permite cualquier origen
     allow_methods=["*"],
-    allow_headers=["*"],  # Permite todos los headers
+    allow_headers=["*"],
 )
 
-# ============================================================================
-# MODELOS DE DATOS (Schemas con Pydantic)
-# ============================================================================
 
+# ----------------------------------------------------------------------------
+# MODELOS DE DATOS (Schemas con Pydantic)
 
 class Post(BaseModel):
     id: int
@@ -63,9 +58,9 @@ class UnsplashPhoto(BaseModel):
     author: str
     alt_description: Optional[str] = None
 
-# ============================================================================
+
+# ----------------------------------------------------------------------------
 # CONFIGURACIÓN DE BASE DE DATOS (SQLite)
-# ============================================================================
 
 
 # Ruta del archivo de base de datos
@@ -76,8 +71,8 @@ os.makedirs("data", exist_ok=True)
 
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    conexion = sqlite3.connect(DB_PATH)
+    cursor = conexion.cursor()
 
     # Crear tabla posts
     # etiquetas se guarda como JSON string (lo convertimos después)
@@ -91,53 +86,75 @@ def init_db():
         )
     ''')
 
-    conn.commit()
-    conn.close()
-    print("✅ Base de datos inicializada")
+    conexion.commit()
+    conexion.close()
+    print("Base de datos inicializada correctamente")
 
 
 def get_db_connection():
-    """
-    Crea y retorna una conexión a la base de datos
-    row_factory permite acceder a columnas por nombre
-    """
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # Para acceder como diccionario
-    return conn
+    conexion = sqlite3.connect(DB_PATH)
+    conexion.row_factory = sqlite3.Row  # Para acceder como diccionario
+    return conexion
 
-# ============================================================================
+# ----------------------------------------------------------------------------
 # FUNCIONES AUXILIARES
-# ============================================================================
 
 
+# Convertir lista de etiquetas a string JSON para guardar en SQLite
 def etiquetas_to_json(etiquetas: List[str]) -> str:
-    """
-    Convierte lista de etiquetas a string JSON para guardar en SQLite
-    """
-    import json
     return json.dumps(etiquetas)
 
 
+# Convertir string JSON a lista de etiquetas
 def json_to_etiquetas(json_str: str) -> List[str]:
-    """
-    Convierte string JSON a lista de etiquetas
-    """
-    import json
     if not json_str:
         return []
     return json.loads(json_str)
 
-# ============================================================================
+
+# Convertir fila de BD a objeto Post
+def row_to_post(row: sqlite3.Row) -> Post:
+    return Post(
+        id=row["id"],
+        usuario=row["usuario"],
+        link_imagen=row["link_imagen"],
+        fecha_alta=datetime.fromisoformat(row["fecha_alta"]),
+        etiquetas=json_to_etiquetas(row["etiquetas"])
+    )
+
+
+# Obtener post por ID y verificar que existe
+def get_post_by_id_or_404(conexion: sqlite3.Connection, post_id: int) -> sqlite3.Row:
+    cursor = conexion.cursor()
+    cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    row = cursor.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Post no encontrado")
+
+    return row
+
+
+# Verificar autorización: el usuario debe ser el creador del post
+def verify_post_ownership(row: sqlite3.Row, x_user: Optional[str]) -> None:
+    if not x_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Header X-User requerido para modificar posts"
+        )
+
+    if row["usuario"] != x_user:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permiso para modificar este post. Solo el usuario que lo creó puede modificarlo."
+        )
+
+# ----------------------------------------------------------------------------
 # API UNSPLASH
-# ============================================================================
 
 
 def fetch_unsplash_photos(count: int = 10) -> List[UnsplashPhoto]:
-    """
-    Llama a la API de Unsplash y transforma la respuesta
-    Solo devuelve los datos necesarios para el frontend
-    """
-    # Obtener API key desde variables de entorno
+    # Obtener API key desde env
     api_key = os.getenv("UNSPLASH_ACCESS_KEY")
 
     if not api_key:
@@ -149,18 +166,17 @@ def fetch_unsplash_photos(count: int = 10) -> List[UnsplashPhoto]:
     # Endpoint de Unsplash para fotos aleatorias
     url = "https://api.unsplash.com/photos/random"
 
-    # Parámetros de la petición
+    # Parámetros de petición
     params = {
         "count": count,  # Número de fotos
         "client_id": api_key
     }
 
     try:
-        # Hacer la petición a Unsplash
+        # Petición a Unsplash
         response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()  # Lanza excepción si hay error HTTP
 
-        # Obtener datos JSON
         data = response.json()
 
         # Transformar respuesta: solo extraer lo necesario
@@ -168,7 +184,7 @@ def fetch_unsplash_photos(count: int = 10) -> List[UnsplashPhoto]:
         for item in data:
             photos.append(UnsplashPhoto(
                 id=item["id"],
-                url=item["urls"]["regular"],  # URL de imagen en calidad media
+                url=item["urls"]["regular"],
                 author=item["user"]["name"],
                 alt_description=item.get("alt_description", "")
             ))
@@ -181,43 +197,31 @@ def fetch_unsplash_photos(count: int = 10) -> List[UnsplashPhoto]:
             detail=f"Error al conectar con Unsplash: {str(e)}"
         )
 
-# ============================================================================
+# ----------------------------------------------------------------------------
 # EVENTOS DE INICIO Y CIERRE
-# ============================================================================
 
 
 @app.on_event("startup")
 def startup():
-    """
-    Se ejecuta cuando arranca el servidor
-    """
     init_db()
 
 
 @app.on_event("shutdown")
 def shutdown():
-    """
-    Se ejecuta cuando se cierra el servidor
-    """
     print("👋 Cerrando aplicación")
 
-# ============================================================================
+# ----------------------------------------------------------------------------
 # ENDPOINTS
-# ============================================================================
-
-# Endpoint raíz - Health check
 
 
+# health check endpoint
 @app.get("/")
 def health():
-    """
-    Verificar que la API está funcionando
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conexion = get_db_connection()
+    cursor = conexion.cursor()
     cursor.execute("SELECT COUNT(*) FROM posts")
     count = cursor.fetchone()[0]
-    conn.close()
+    conexion.close()
 
     return {
         "ok": True,
@@ -226,9 +230,8 @@ def health():
         "docs": "/docs"
     }
 
-# Favicon endpoint - previene 404 en logs
 
-
+# Favicon endpoint (evitar error 404 en logs del navegador)
 @app.get("/favicon.ico")
 def favicon():
     """
@@ -237,128 +240,58 @@ def favicon():
     from fastapi.responses import Response
     return Response(status_code=204)
 
+
 # GET - Listado de posts con paginación
-
-
 @app.get("/api/posts", response_model=PostsPaginados)
-def listar_posts(
-    page: int = Query(1, ge=1, description="Número de página"),
-    limit: int = Query(10, ge=1, le=100, description="Posts por página"),
-    min_date: Optional[str] = Query(
-        None, description="Fecha mínima ISO (para LocalStorage)")
-):
-    """
-    Obtener lista de posts con paginación
+def listar_posts(page: int = Query(1, ge=1, description="Número de página"), limit: int = Query(10, ge=1, le=100, description="Posts por página"), min_date: Optional[str] = Query(None, description="Fecha mínima ISO (para LocalStorage)")):
+    conexion = get_db_connection()
+    cursor = conexion.cursor()
 
-    - page: número de página (default: 1)
-    - limit: posts por página (default: 10, max: 100)
-    - min_date: filtrar posts creados después de esta fecha (opcional)
-                formato ISO: "2024-12-14T10:30:00"
-
-    Retorna:
-    - total: total de posts en la DB
-    - page: página actual
-    - limit: posts por página
-    - posts: lista de posts
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    # Calcular offset para paginación
+    # offset (gnora los primeros X posts y dame los siguientes Y)
     offset = (page - 1) * limit
 
-    # Query base
+    # obtener posts de bd
     query = "SELECT * FROM posts"
     params = []
-
-    # Si se proporciona min_date, filtrar
     if min_date:
         query += " WHERE fecha_alta > ?"
         params.append(min_date)
-
-    # Ordenar por fecha (más recientes primero) y aplicar paginación
     query += " ORDER BY fecha_alta DESC LIMIT ? OFFSET ?"
     params.extend([limit, offset])
 
-    # Ejecutar query
     cursor.execute(query, params)
     rows = cursor.fetchall()
 
-    # Contar total de posts (para paginación)
+    # Contar total
     count_query = "SELECT COUNT(*) FROM posts"
     if min_date:
-        count_query += " WHERE fecha_alta > ?"
-        cursor.execute(count_query, [min_date])
+        cursor.execute(count_query + " WHERE fecha_alta > ?", [min_date])
     else:
         cursor.execute(count_query)
-
     total = cursor.fetchone()[0]
-    conn.close()
 
-    # Convertir rows a objetos Post
-    posts = []
-    for row in rows:
-        posts.append(Post(
-            id=row["id"],
-            usuario=row["usuario"],
-            link_imagen=row["link_imagen"],
-            fecha_alta=datetime.fromisoformat(row["fecha_alta"]),
-            etiquetas=json_to_etiquetas(row["etiquetas"])
-        ))
+    conexion.close()
 
-    return PostsPaginados(
-        total=total,
-        page=page,
-        limit=limit,
-        posts=posts
-    )
+    # Convertir a objetos Post
+    posts = [row_to_post(row) for row in rows]
+
+    return PostsPaginados(total=total, page=page, limit=limit, posts=posts)
+
 
 # GET - Obtener un post por ID
-
-
 @app.get("/api/posts/{post_id}", response_model=Post)
-def obtener_post(post_id: int):
-    """
-    Obtener un post específico por su ID
+def get_post(post_id: int):
+    conexion = get_db_connection()
+    row = get_post_by_id_or_404(conexion, post_id)
+    conexion.close()
 
-    Retorna 404 si no existe
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    return row_to_post(row)
 
-    cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
-    row = cursor.fetchone()
-    conn.close()
-
-    if not row:
-        raise HTTPException(status_code=404, detail="Post no encontrado")
-
-    return Post(
-        id=row["id"],
-        usuario=row["usuario"],
-        link_imagen=row["link_imagen"],
-        fecha_alta=datetime.fromisoformat(row["fecha_alta"]),
-        etiquetas=json_to_etiquetas(row["etiquetas"])
-    )
 
 # POST - Crear nuevo post
-
-
 @app.post("/api/posts", response_model=Post, status_code=201)
 def crear_post(post: PostCreate):
-    """
-    Crear un nuevo post
-
-    Campos requeridos:
-    - usuario: nombre del usuario
-    - link_imagen: URL de la imagen
-
-    Campos opcionales:
-    - etiquetas: lista de tags
-
-    La fecha se genera automáticamente en el servidor
-    """
-    # Validar campos obligatorios
+    # Validacion con errores (400 Bad Request)
     if not post.usuario.strip():
         raise HTTPException(
             status_code=400, detail="El usuario es obligatorio")
@@ -367,8 +300,8 @@ def crear_post(post: PostCreate):
         raise HTTPException(
             status_code=400, detail="El link de imagen es obligatorio")
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conexion = get_db_connection()
+    cursor = conexion.cursor()
 
     # Fecha actual en formato ISO
     fecha_alta = datetime.utcnow().isoformat()
@@ -385,8 +318,8 @@ def crear_post(post: PostCreate):
     # Obtener el ID del post recién creado
     post_id = cursor.lastrowid
 
-    conn.commit()
-    conn.close()
+    conexion.commit()
+    conexion.close()
 
     # Retornar el post creado
     return Post(
@@ -397,48 +330,16 @@ def crear_post(post: PostCreate):
         etiquetas=post.etiquetas
     )
 
+
 # PUT - Actualizar post existente
-
-
 @app.put("/api/posts/{post_id}", response_model=Post)
 def actualizar_post(post_id: int, post: PostUpdate, x_user: Optional[str] = Header(None, alias="X-User")):
-    """
-    Actualizar un post existente
+    conexion = get_db_connection()
+    cursor = conexion.cursor()
 
-    Todos los campos son opcionales (actualización parcial)
-    - usuario
-    - link_imagen
-    - etiquetas
-
-    Requiere header X-User con el nombre del usuario que creó el post.
-    Retorna 404 si el post no existe
-    Retorna 403 si el usuario no es el creador del post
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    # Verificar que el post existe
-    cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
-    row = cursor.fetchone()
-
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Post no encontrado")
-
-    # Verificar autorización: el usuario debe ser el creador del post
-    if not x_user:
-        conn.close()
-        raise HTTPException(
-            status_code=401,
-            detail="Header X-User requerido para modificar posts"
-        )
-
-    if row["usuario"] != x_user:
-        conn.close()
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes permiso para modificar este post. Solo el usuario que lo creó puede modificarlo."
-        )
+    # Verificar que post existe y que el usuario tiene permiso
+    row = get_post_by_id_or_404(conexion, post_id)
+    verify_post_ownership(row, x_user)
 
     # Preparar campos a actualizar
     updates = []
@@ -458,7 +359,7 @@ def actualizar_post(post_id: int, post: PostUpdate, x_user: Optional[str] = Head
 
     # Si no hay nada que actualizar
     if not updates:
-        conn.close()
+        conexion.close()
         raise HTTPException(
             status_code=400,
             detail="No se proporcionaron campos para actualizar"
@@ -469,24 +370,18 @@ def actualizar_post(post_id: int, post: PostUpdate, x_user: Optional[str] = Head
     params.append(post_id)
 
     cursor.execute(query, params)
-    conn.commit()
+    conexion.commit()
 
     # Obtener el post actualizado
     cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
     updated_row = cursor.fetchone()
-    conn.close()
+    conexion.close()
 
-    return Post(
-        id=updated_row["id"],
-        usuario=updated_row["usuario"],
-        link_imagen=updated_row["link_imagen"],
-        fecha_alta=datetime.fromisoformat(updated_row["fecha_alta"]),
-        etiquetas=json_to_etiquetas(updated_row["etiquetas"])
-    )
+    # Return post actualizado
+    return row_to_post(updated_row)
+
 
 # DELETE - Eliminar post
-
-
 @app.delete("/api/posts/{post_id}", status_code=204)
 def eliminar_post(post_id: int, x_user: Optional[str] = Header(None, alias="X-User")):
     """
@@ -497,51 +392,23 @@ def eliminar_post(post_id: int, x_user: Optional[str] = Header(None, alias="X-Us
     Retorna 404 si el post no existe
     Retorna 403 si el usuario no es el creador del post
     """
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conexion = get_db_connection()
+    cursor = conexion.cursor()
 
-    # Verificar que existe antes de eliminar
-    cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
-    row = cursor.fetchone()
-
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Post no encontrado")
-
-    # Verificar autorización: el usuario debe ser el creador del post
-    if not x_user:
-        conn.close()
-        raise HTTPException(
-            status_code=401,
-            detail="Header X-User requerido para eliminar posts"
-        )
-
-    if row["usuario"] != x_user:
-        conn.close()
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes permiso para eliminar este post. Solo el usuario que lo creó puede eliminarlo."
-        )
+    # Verificar que post existe y que el usuario tiene permiso
+    row = get_post_by_id_or_404(conexion, post_id)
+    verify_post_ownership(row, x_user)
 
     # Eliminar el post
     cursor.execute("DELETE FROM posts WHERE id = ?", (post_id,))
-    conn.commit()
-    conn.close()
+    conexion.commit()
+    conexion.close()
 
     # 204 No Content (sin body en la respuesta)
     return None
 
-# GET - Discovery (Fotos de Unsplash)
 
-
+# GET - Discovery (unsplash)
 @app.get("/api/discovery", response_model=List[UnsplashPhoto])
 def get_discovery(count: int = Query(10, ge=1, le=30, description="Número de fotos")):
-    """
-    Obtener fotos aleatorias de Unsplash para la sección de descubrimiento
-
-    - count: número de fotos a obtener (default: 10, max: 30)
-
-    Esta ruta llama a la API de Unsplash y transforma la respuesta
-    para devolver solo los datos necesarios para el frontend
-    """
     return fetch_unsplash_photos(count)
