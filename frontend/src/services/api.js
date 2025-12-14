@@ -1,6 +1,5 @@
 // Configuración de API Base URL
-// Siempre usa localhost para el backend (tanto en desarrollo como en GitHub Pages)
-const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
 
 const API_BASE = isLocal
   ? 'http://127.0.0.1:8000'      // cuando estoy probando en mi compu
