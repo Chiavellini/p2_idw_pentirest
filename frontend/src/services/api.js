@@ -1,21 +1,23 @@
-// Detectar automáticamente si estamos en desarrollo o producción
-// En desarrollo (localhost): usa el backend local
-// En producción (GitHub Pages): necesita backend desplegado públicamente
+// Configuración de API Base URL
+// - En desarrollo (localhost): usa backend local
+// - En producción (GitHub Pages): usa localhost (solo funciona si tienes túnel o solo para ti)
 const getApiBase = () => {
   // Si estamos en localhost (desarrollo), usar backend local
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     return 'http://127.0.0.1:8000';
   }
   
-  // Si estamos en producción (GitHub Pages u otro hosting)
-  // Necesitas desplegar el backend y cambiar esta URL
-  // Por ahora, intentará usar el mismo origen (no funcionará si backend no está ahí)
-  console.warn('⚠️ Frontend en producción detectado. El backend debe estar desplegado públicamente.');
-  console.warn('⚠️ Cambia esta URL por la de tu backend desplegado (Railway, Render, etc.)');
+  // Si estamos en GitHub Pages o producción, usar localhost
+  // ⚠️ IMPORTANTE: Esto solo funcionará si:
+  // 1. Tienes un túnel (ngrok, localtunnel) exponiendo tu localhost:8000
+  // 2. O solo para ti mismo cuando visitas desde tu máquina con el backend corriendo
+  // Para otros usuarios, necesitarás un túnel público o desplegar el backend
   
-  // TODO: Cambiar por la URL de tu backend desplegado
-  // Ejemplo: return 'https://tu-backend.railway.app';
-  return window.location.origin; // Esto no funcionará si el backend no está en el mismo dominio
+  // Si tienes un túnel, cambia esta URL por la del túnel:
+  // Ejemplo con ngrok: return 'https://abc123.ngrok.io';
+  // Ejemplo con localtunnel: return 'https://tu-tunnel.loca.lt';
+  
+  return 'http://127.0.0.1:8000';
 };
 
 const API_BASE = getApiBase();
