@@ -11,7 +11,6 @@ const PinCard = ({ post, onEdit }) => {
 
   const isOwner = currentUser === post.usuario;
 
-  // Detectar si es un dispositivo táctil
   useEffect(() => {
     const checkTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     setIsTouchDevice(checkTouch);
@@ -25,7 +24,6 @@ const PinCard = ({ post, onEdit }) => {
     }
   };
 
-  // Manejar click en la imagen para dispositivos táctiles
   const handleImageClick = () => {
     if (isTouchDevice && isOwner) {
       setShowActions(!showActions);
@@ -50,7 +48,6 @@ const PinCard = ({ post, onEdit }) => {
         setShowDeleteConfirm(false);
       }}
     >
-      {/* Image */}
       <div className="pin-image-container" onClick={handleImageClick}>
         {!imageLoaded && (
           <div className="pin-skeleton">
@@ -69,7 +66,6 @@ const PinCard = ({ post, onEdit }) => {
           }}
         />
 
-        {/* Overlay actions */}
         {showActions && imageLoaded && (
           <div className="pin-overlay">
             <div className="pin-overlay-actions">
@@ -138,7 +134,6 @@ const PinCard = ({ post, onEdit }) => {
         )}
       </div>
 
-      {/* Info */}
       <div className="pin-info">
         <div className="pin-user">
           <div className="pin-user-avatar">

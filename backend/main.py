@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 import requests
 import json
 
-# Cargar variables de entorno desde .env
 load_dotenv()
 
 app = FastAPI(title="Pinfinity API")
@@ -186,7 +185,6 @@ def fetch_unsplash_photos(count: int = 10) -> List[UnsplashPhoto]:
                 id=item["id"],
                 url=item["urls"]["regular"],
                 author=item["user"]["name"],
-                alt_description=item.get("alt_description", "")
             ))
 
         return photos
@@ -208,7 +206,7 @@ def startup():
 
 @app.on_event("shutdown")
 def shutdown():
-    print("👋 Cerrando aplicación")
+    print("Cerrando aplicación")
 
 # ----------------------------------------------------------------------------
 # ENDPOINTS
@@ -217,16 +215,9 @@ def shutdown():
 # health check endpoint
 @app.get("/")
 def health():
-    conexion = get_db_connection()
-    cursor = conexion.cursor()
-    cursor.execute("SELECT COUNT(*) FROM posts")
-    count = cursor.fetchone()[0]
-    conexion.close()
-
     return {
         "ok": True,
         "message": "Pinterest Clone API",
-        "total_posts": count,
         "docs": "/docs"
     }
 
@@ -384,18 +375,10 @@ def actualizar_post(post_id: int, post: PostUpdate, x_user: Optional[str] = Head
 # DELETE - Eliminar post
 @app.delete("/api/posts/{post_id}", status_code=204)
 def eliminar_post(post_id: int, x_user: Optional[str] = Header(None, alias="X-User")):
-    """
-    Eliminar un post por su ID
-
-    Requiere header X-User con el nombre del usuario que creó el post.
-    Retorna 204 No Content si se elimina correctamente
-    Retorna 404 si el post no existe
-    Retorna 403 si el usuario no es el creador del post
-    """
     conexion = get_db_connection()
     cursor = conexion.cursor()
 
-    # Verificar que post existe y que el usuario tiene permiso
+    # Verificar que post existe y que usuario tiene permiso
     row = get_post_by_id_or_404(conexion, post_id)
     verify_post_ownership(row, x_user)
 
@@ -404,7 +387,6 @@ def eliminar_post(post_id: int, x_user: Optional[str] = Header(None, alias="X-Us
     conexion.commit()
     conexion.close()
 
-    # 204 No Content (sin body en la respuesta)
     return None
 
 

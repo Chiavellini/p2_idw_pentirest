@@ -4,10 +4,8 @@ import './Pagination.css';
 const Pagination = () => {
   const { page, totalPages, goToPage, totalPosts, limit } = useApp();
 
-  // Debug: verificar valores
   console.log('Pagination Debug:', { page, totalPages, totalPosts, limit, shouldShow: totalPages > 1 });
 
-  // Siempre mostrar si hay posts para demostrar la paginación
   if (totalPosts === 0) return null;
 
   const getPageNumbers = () => {

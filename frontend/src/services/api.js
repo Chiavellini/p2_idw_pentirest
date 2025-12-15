@@ -1,16 +1,10 @@
-// Configuración de API Base URL
 const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
 
 const API_BASE = isLocal
-  ? 'http://127.0.0.1:8000'      // cuando estoy probando en mi compu (npm run dev)
-  : 'https://TU-URL-NGROK.ngrok-free.app';  // ⚠️ CAMBIA ESTO: URL de ngrok cuando esté en GitHub Pages
-
-// ============================================================================
-// POSTS API
-// ============================================================================
+  ? 'http://127.0.0.1:8000'
+  : 'https://TU-URL-NGROK.ngrok-free.app';
 
 export const postsAPI = {
-  // Obtener posts con paginación
   getAll: async (page = 1, limit = 10, minDate = null) => {
     let url = `${API_BASE}/api/posts?page=${page}&limit=${limit}`;
     if (minDate) {
@@ -21,14 +15,12 @@ export const postsAPI = {
     return response.json();
   },
 
-  // Obtener un post por ID
   getById: async (id) => {
     const response = await fetch(`${API_BASE}/api/posts/${id}`);
     if (!response.ok) throw new Error('Post no encontrado');
     return response.json();
   },
 
-  // Crear nuevo post
   create: async (postData) => {
     const response = await fetch(`${API_BASE}/api/posts`, {
       method: 'POST',
@@ -44,7 +36,6 @@ export const postsAPI = {
     return response.json();
   },
 
-  // Actualizar post existente
   update: async (id, postData, currentUser) => {
     const response = await fetch(`${API_BASE}/api/posts/${id}`, {
       method: 'PUT',
@@ -61,7 +52,6 @@ export const postsAPI = {
     return response.json();
   },
 
-  // Eliminar post
   delete: async (id, currentUser) => {
     const response = await fetch(`${API_BASE}/api/posts/${id}`, {
       method: 'DELETE',
@@ -77,12 +67,7 @@ export const postsAPI = {
   },
 };
 
-// ============================================================================
-// DISCOVERY API (Unsplash)
-// ============================================================================
-
 export const discoveryAPI = {
-  // Obtener fotos de Unsplash
   getPhotos: async (count = 12) => {
     const response = await fetch(`${API_BASE}/api/discovery?count=${count}`);
     if (!response.ok) throw new Error('Error al cargar discovery');
@@ -90,24 +75,17 @@ export const discoveryAPI = {
   },
 };
 
-// ============================================================================
-// LOCAL STORAGE HELPERS
-// ============================================================================
-
 export const storage = {
-  // Usuario actual
   getUser: () => sessionStorage.getItem('currentUser'),
   setUser: (username) => sessionStorage.setItem('currentUser', username),
   removeUser: () => sessionStorage.removeItem('currentUser'),
 
-  // Posts cache
   getPosts: () => {
     const cached = localStorage.getItem('posts');
     return cached ? JSON.parse(cached) : null;
   },
   setPosts: (posts) => localStorage.setItem('posts', JSON.stringify(posts)),
 
-  // Timestamp del último fetch
   getTimestamp: () => localStorage.getItem('posts_timestamp'),
   setTimestamp: (timestamp) => localStorage.setItem('posts_timestamp', timestamp),
 };

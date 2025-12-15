@@ -9,7 +9,6 @@ const Header = ({ onCreateClick, onDiscoveryClick, onHomeClick, currentView }) =
   return (
     <header className="header">
       <div className="header-container">
-        {/* Logo */}
         <div className="header-logo" onClick={onHomeClick} style={{ cursor: 'pointer' }}>
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <path
@@ -21,7 +20,6 @@ const Header = ({ onCreateClick, onDiscoveryClick, onHomeClick, currentView }) =
           <span className="header-title">Pinfinity</span>
         </div>
 
-        {/* Navigation */}
         <nav className="header-nav">
           <button
             className={`nav-btn ${currentView === 'home' ? 'active' : ''}`}
@@ -61,7 +59,6 @@ const Header = ({ onCreateClick, onDiscoveryClick, onHomeClick, currentView }) =
           </button>
         </nav>
 
-        {/* Actions */}
         <div className="header-actions">
           {currentUser && (
             <button className="create-btn" onClick={onCreateClick}>
@@ -77,7 +74,6 @@ const Header = ({ onCreateClick, onDiscoveryClick, onHomeClick, currentView }) =
             </button>
           )}
 
-          {/* User Avatar */}
           <div className="user-avatar-container">
             <button
               className="user-avatar"
