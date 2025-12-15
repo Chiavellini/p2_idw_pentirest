@@ -1,9 +1,6 @@
 // Configuración de API Base URL
-const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
-
-const API_BASE = isLocal
-  ? 'http://127.0.0.1:8000'      // cuando estoy probando en mi compu
-  : 'http://127.0.0.1:8000';     // cuando está desplegado en GitHub Pages
+// Frontend en GitHub Pages, Backend en localhost
+const API_BASE = 'http://127.0.0.1:8000';
 
 // ============================================================================
 // POSTS API
