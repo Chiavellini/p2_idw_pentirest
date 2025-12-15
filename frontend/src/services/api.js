@@ -4,19 +4,30 @@ const API_BASE = isLocal
   ? 'http://127.0.0.1:8000'
   : 'https://sondra-unshivering-derelictly.ngrok-free.dev';
 
+const getNgrokHeaders = () => {
+  if (!isLocal) {
+    return { 'ngrok-skip-browser-warning': 'true' };
+  }
+  return {};
+};
+
 export const postsAPI = {
   getAll: async (page = 1, limit = 10, minDate = null) => {
     let url = `${API_BASE}/api/posts?page=${page}&limit=${limit}`;
     if (minDate) {
       url += `&min_date=${minDate}`;
     }
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: getNgrokHeaders(),
+    });
     if (!response.ok) throw new Error('Error al cargar posts');
     return response.json();
   },
 
   getById: async (id) => {
-    const response = await fetch(`${API_BASE}/api/posts/${id}`);
+    const response = await fetch(`${API_BASE}/api/posts/${id}`, {
+      headers: getNgrokHeaders(),
+    });
     if (!response.ok) throw new Error('Post no encontrado');
     return response.json();
   },
@@ -26,6 +37,7 @@ export const postsAPI = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...getNgrokHeaders(),
       },
       body: JSON.stringify(postData),
     });
@@ -42,6 +54,7 @@ export const postsAPI = {
       headers: {
         'Content-Type': 'application/json',
         'X-User': currentUser,
+        ...getNgrokHeaders(),
       },
       body: JSON.stringify(postData),
     });
@@ -57,6 +70,7 @@ export const postsAPI = {
       method: 'DELETE',
       headers: {
         'X-User': currentUser,
+        ...getNgrokHeaders(),
       },
     });
     if (!response.ok) {
@@ -69,7 +83,9 @@ export const postsAPI = {
 
 export const discoveryAPI = {
   getPhotos: async (count = 12) => {
-    const response = await fetch(`${API_BASE}/api/discovery?count=${count}`);
+    const response = await fetch(`${API_BASE}/api/discovery?count=${count}`, {
+      headers: getNgrokHeaders(),
+    });
     if (!response.ok) throw new Error('Error al cargar discovery');
     return response.json();
   },
