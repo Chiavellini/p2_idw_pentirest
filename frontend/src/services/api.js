@@ -2,7 +2,7 @@ const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'loca
 
 const API_BASE = isLocal
   ? 'http://127.0.0.1:8000'
-  : 'https://TU-URL-NGROK.ngrok-free.app';
+  : 'https://sondra-unshivering-derelictly.ngrok-free.dev';
 
 export const postsAPI = {
   getAll: async (page = 1, limit = 10, minDate = null) => {
