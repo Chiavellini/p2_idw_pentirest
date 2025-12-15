@@ -65,6 +65,8 @@ body {
   min-height: 100vh;
   background: var(--background);
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Headings */
@@ -181,6 +183,9 @@ img {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Responsive typography */
