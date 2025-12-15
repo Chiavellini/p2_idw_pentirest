@@ -18,7 +18,7 @@ export const AppProvider = ({ children }) => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0);
-  const limit = 6;
+  const limit = 10;
 
   // Cargar usuario al iniciar
   useEffect(() => {

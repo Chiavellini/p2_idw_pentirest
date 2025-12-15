@@ -2,11 +2,17 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .app-content {
   flex: 1;
   padding-top: 76px;
+  width: 100%;
+  max-width: none;
+  overflow-x: hidden;
 }
 
 /* Loading Screen */

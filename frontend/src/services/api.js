@@ -1,6 +1,9 @@
 // Configuración de API Base URL
-// Frontend en GitHub Pages, Backend en localhost
-const API_BASE = 'http://127.0.0.1:8000';
+const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+
+const API_BASE = isLocal
+  ? 'http://127.0.0.1:8000'      // cuando estoy probando en mi compu (npm run dev)
+  : 'https://TU-URL-NGROK.ngrok-free.app';  // ⚠️ CAMBIA ESTO: URL de ngrok cuando esté en GitHub Pages
 
 // ============================================================================
 // POSTS API
@@ -8,7 +11,7 @@ const API_BASE = 'http://127.0.0.1:8000';
 
 export const postsAPI = {
   // Obtener posts con paginación
-  getAll: async (page = 1, limit = 6, minDate = null) => {
+  getAll: async (page = 1, limit = 10, minDate = null) => {
     let url = `${API_BASE}/api/posts?page=${page}&limit=${limit}`;
     if (minDate) {
       url += `&min_date=${minDate}`;
