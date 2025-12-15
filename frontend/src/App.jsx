@@ -16,7 +16,6 @@ function AppContent() {
   const [editingPost, setEditingPost] = useState(null);
   const [currentView, setCurrentView] = useState('home');
 
-  // Mostrar modal de auth si no hay usuario
   useEffect(() => {
     if (!currentUser) {
       setShowAuthModal(true);
@@ -78,7 +77,6 @@ function AppContent() {
         )}
       </main>
 
-      {/* Modals */}
       {showAuthModal && !currentUser && (
         <AuthModal onClose={() => setShowAuthModal(false)} />
       )}

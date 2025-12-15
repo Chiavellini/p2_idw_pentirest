@@ -24,13 +24,9 @@ const MasonryGrid = ({ posts, onEdit }) => {
       });
     };
 
-    // Resize with a small delay to ensure images are loaded
     const timer = setTimeout(resizeAllGridItems, 100);
-
-    // Resize on window resize
     window.addEventListener('resize', resizeAllGridItems);
 
-    // Resize when images load
     const images = gridRef.current?.querySelectorAll('img');
     images?.forEach((img) => {
       if (img.complete) {
@@ -40,7 +36,6 @@ const MasonryGrid = ({ posts, onEdit }) => {
       }
     });
 
-    // Cleanup
     return () => {
       clearTimeout(timer);
       window.removeEventListener('resize', resizeAllGridItems);
