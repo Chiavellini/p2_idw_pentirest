@@ -2,7 +2,8 @@
 
 Bernardo del Río
 
-_Resumen del Producto:_
+## Resumen del Producto:
+
 Aplicación web tipo Pinterest que replica la experiencia de exploración y gestión de contenido visual, utilizando Vite + React en el frontend y FastAPI en el backend. La plataforma permite a los usuarios crear, editar, actualizar y eliminar posts propios (CRUD), así como consultar posts por ID mediante una API bien estructurada. Incluye una sección de “Descubrimiento” que obtiene imágenes aleatorias a través de la API de Unsplash, consumidas y transformadas desde la API propia para optimizar el render en el cliente. El sistema implementa Open Graph para generar vistas previas enriquecidas al compartir enlaces y utiliza localStorage y sessionStorage para gestionar el estado del usuario, controlando qué posts puede editar y optimizando la carga inicial del feed en la primera visita. En conjunto, el proyecto demuestra una arquitectura moderna, eficiente y orientada a una experiencia de usuario fluida.
 
 ## Front-end:
